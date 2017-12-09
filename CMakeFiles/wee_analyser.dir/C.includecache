@@ -1,0 +1,46 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/callum/Code/stream_analyser/src/main.c
+libucsi/transport_packet.h
+/home/callum/Code/stream_analyser/src/libucsi/transport_packet.h
+stdio.h
+-
+stdlib.h
+-
+sys/socket.h
+-
+netinet/in.h
+-
+signal.h
+-
+unistd.h
+-
+
+include/libucsi/descriptor.h
+libucsi/endianops.h
+-
+stdint.h
+-
+stdlib.h
+-
+
+include/libucsi/endianops.h
+stdint.h
+-
+byteswap.h
+-
+endian.h
+-
+
+include/libucsi/transport_packet.h
+stdint.h
+-
+descriptor.h
+include/libucsi/descriptor.h
+

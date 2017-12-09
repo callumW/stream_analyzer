@@ -1,0 +1,1 @@
+/usr/bin/cc   -rdynamic CMakeFiles/stream_analyse.dir/src/main.c.o  -o stream_analyse 
