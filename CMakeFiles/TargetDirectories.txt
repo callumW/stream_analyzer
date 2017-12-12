@@ -1,3 +1,0 @@
-/home/callum/Code/stream_analyser/CMakeFiles/rebuild_cache.dir
-/home/callum/Code/stream_analyser/CMakeFiles/wee_analyser.dir
-/home/callum/Code/stream_analyser/CMakeFiles/edit_cache.dir

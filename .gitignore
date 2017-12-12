@@ -1,0 +1,7 @@
+# Executable
+stream_analyzer
+
+# cmake files
+CMakeCache.txt
+cmake_install.cmake
+/CMakeFiles/

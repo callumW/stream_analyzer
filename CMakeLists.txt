@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(Wee_Analyser C)
+project(stream_analyzer C)
 
 file(GLOB SRC_FILES "src/*.c")
 file(GLOB_RECURSE LIBUCSI_SRC "libucsi/*.c")
@@ -16,6 +16,6 @@ else()
     message(FATAL_ERROR "Curses not found")
 endif(CURSES_FOUND)
 
-add_executable(wee_analyser ${SRC_FILES} ${LIBUCSI_SRC})
+add_executable(stream_analyzer ${SRC_FILES} ${LIBUCSI_SRC})
 include_directories("include" ${CURSES_INCLUDE_DIRS})
-target_link_libraries(wee_analyser ${CURSES_LIBRARIES})
+target_link_libraries(stream_analyzer ${CURSES_LIBRARIES})

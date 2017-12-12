@@ -1,1 +1,0 @@
-/usr/bin/cc   -rdynamic CMakeFiles/wee_analyser.dir/src/main.c.o  -o wee_analyser -lncurses -lform 
