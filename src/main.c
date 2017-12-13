@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
-
+#include <fcntl.h>
 #define DEFAULT_PORT 5000
 
 /** GLOBALS **/
@@ -36,6 +36,8 @@ int create_socket()
         perror("bind");
         return -1;
     }
+    // set to non blocking
+    fcntl(g_socket, F_SETFL, O_NONBLOCK);
     return g_socket;
 }
 
@@ -44,13 +46,13 @@ int close_socket(int sock)
     return shutdown(sock, 2);
 }
 
-int join_multicast(char** ip, int socket)
+bool join_multicast()
 {
-    if (setsockopt(socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &g_mreq, sizeof(g_mreq)) < 0) {
+    if (setsockopt(g_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &g_mreq, sizeof(g_mreq)) < 0) {
         perror("join multicast");
-        return -1;
+        return false;
     }
-    return socket;
+    return true;
 }
 
 int leave_multicast()
@@ -118,6 +120,7 @@ bool parse_options(int argc, char** argv)
     if ( !got_port ) {
         fprintf(stderr, "No port specified, using port %d\n", DEFAULT_PORT);
         g_port = DEFAULT_PORT;
+        g_name.sin_port = htons(g_port);
     }
     return true;
 }
@@ -139,8 +142,18 @@ int main(int argc, char** argv)
 {
     if ( !parse_options(argc, argv) ) return EXIT_FAILURE;
     if ( !init() ) return EXIT_FAILURE;
+    if ( !join_multicast() ) return EXIT_FAILURE;
 
+    size_t to_read = 188 * 7;
+    uint8_t buffer[188 * 7] = {0};
+    size_t num_read = 0;
     while (!g_stop) {
+        num_read = read(g_socket, buffer, to_read);
+        if ( (unsigned) num_read == -1 ) {
+            fprintf(stderr, "Failed to read anything\n");
+            perror("socket read");
+        }
+        printf("Requested %luB and got %luB\n", to_read, num_read);
         sleep(1);
     }
     close_socket(g_socket);
