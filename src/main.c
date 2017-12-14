@@ -146,13 +146,17 @@ bool init()  // Must be called after globals are set up
 
 int main(int argc, char** argv)
 {
+    printf("Parsing options\n");
     if ( !parse_options(argc, argv) ) return EXIT_FAILURE;
+    printf("Initialising\n");
     if ( !init() ) return EXIT_FAILURE;
+    printf("Joinging multicast group\n");
     if ( !join_multicast() ) return EXIT_FAILURE;
 
     size_t to_read = 188 * 7;
     uint8_t buffer[188 * 7] = {0};
     size_t num_read = 0;
+    printf("Entering main loop\n");
     while (!g_stop) {
         num_read = read(g_socket, buffer, to_read);
         if ( (unsigned) num_read == -1 ) {
