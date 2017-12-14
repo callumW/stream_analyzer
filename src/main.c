@@ -32,6 +32,12 @@ int create_socket()
         perror("socket");
         return -1;
     }
+    // Allow multiple sockets to use same port number
+    uint flag = 1;
+    if (setsockopt(g_socket, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag)) < 0) {
+        perror("setsockopt");
+        return -1;
+    }
     if (bind(g_socket, (struct sockaddr*) &g_name, sizeof(g_name)) < 0) {
         perror("bind");
         return -1;
