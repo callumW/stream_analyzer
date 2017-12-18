@@ -1,4 +1,4 @@
-#include "libucsi/transport_packet.h"
+#include <libucsi/transport_packet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -9,6 +9,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <fcntl.h>
+#include <inttypes.h>
+
 #define DEFAULT_PORT 5000
 
 /** GLOBALS **/
@@ -18,6 +20,7 @@ struct ip_mreq g_mreq;
 struct sockaddr_in g_name;
 bool g_stop = 0;
 int g_socket = 0;
+uint64_t pkt_count = 0;
 
 void signal_handler(int signum)
 {
@@ -71,6 +74,7 @@ bool set_ip(char* ip)
     if ( ip != NULL) {
         if ( inet_aton(ip, &g_mreq.imr_multiaddr) != 0 ){
             strncpy(g_ip_addr, ip, 15); // copy address, leave last element as null terminator
+            printf("Using ip address: %s\n", g_ip_addr);
             return true;
         }
     }
@@ -78,6 +82,7 @@ bool set_ip(char* ip)
         fprintf(stderr, "%s was passed a null pointer\n", __func__);
         return false;
     }
+    return false;
 }
 
 bool parse_options(int argc, char** argv)
@@ -104,6 +109,7 @@ bool parse_options(int argc, char** argv)
                     fprintf(stderr, "%s is not a valid port, using %d instead\n", optarg, DEFAULT_PORT);
                     g_port = DEFAULT_PORT;
                 }
+                printf("Using port: %"PRIu16"\n", g_port);
                 g_name.sin_port = htons(g_port);
                 got_port = true;
                 break;
@@ -131,6 +137,21 @@ bool parse_options(int argc, char** argv)
     return true;
 }
 
+void print_packet_info(struct transport_values* pkt_vals)
+{
+    if ( pkt_vals == NULL) return;
+
+    printf( "Packet No.:     %"PRIu64"\n"
+            "Payload Length: %"PRIu16"B\n"
+            "PCR:            %"PRIu64"\n"
+            "opcr:           %"PRIu64"\n"
+            "----------------\n",
+            pkt_count,
+            pkt_vals->payload_length,
+            pkt_vals->pcr,
+            pkt_vals->opcr);
+}
+
 bool init()  // Must be called after globals are set up
 {
     g_mreq.imr_interface.s_addr = htonl(INADDR_ANY);
@@ -153,9 +174,16 @@ int main(int argc, char** argv)
     printf("Joinging multicast group\n");
     if ( !join_multicast() ) return EXIT_FAILURE;
 
+    struct transport_packet* packet;
+    struct transport_values pkt_vals;
+    // Extract all
+    enum transport_value extract_flag = transport_value_pcr | transport_value_opcr
+        | transport_value_splice_countdown | transport_value_private_data | transport_value_ltw |
+        transport_value_piecewise_rate | transport_value_seamless_splice;
     size_t to_read = 188 * 7;
     uint8_t buffer[188 * 7] = {0};
     size_t num_read = 0;
+    int i = 0;
     printf("Entering main loop\n");
     while (!g_stop) {
         num_read = read(g_socket, buffer, to_read);
@@ -163,7 +191,22 @@ int main(int argc, char** argv)
             fprintf(stderr, "Failed to read anything\n");
             perror("socket read");
         }
-        printf("Requested %luB and got %luB\n", to_read, num_read);
+        if ( num_read % TRANSPORT_PACKET_LENGTH == 0) {
+            for (i = 0; i < num_read; i += TRANSPORT_PACKET_LENGTH) {
+                packet = transport_packet_init( (unsigned char*) buffer + i);
+                transport_packet_values_extract(packet, &pkt_vals, extract_flag);
+                // print packet info
+                print_packet_info(&pkt_vals);
+                pkt_count++;
+            }
+        }
+        else {
+            fprintf(stderr, "Read in an unaligned amount of data (%ldB)\n", num_read);
+        }
+        // get packets from udp frame
+        // calculate stats
+        // check if we need to print stats
+        // sleep
         sleep(1);
     }
     close_socket(g_socket);
